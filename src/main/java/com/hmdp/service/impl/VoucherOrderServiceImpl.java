@@ -15,6 +15,7 @@ import org.redisson.api.RedissonClient;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.connection.stream.*;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
@@ -113,35 +114,43 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         }
         private void handlePendingList() {
             while (true) {
-                //获取PendingList中的订单信息 XREADGROUP GROUP g1 c1 count 1  STREAMS s1 >
+                // 1.获取 PendingList 中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 STREAMS s1 0
+                List<MapRecord<String, Object, Object>> list;
                 try {
-                    // 1.获取消息队列中的订单信息 XREADGROUP GROUP g1 c1 COUNT 1 BLOCK 2000 STREAMS s1 >
-                    List<MapRecord<String, Object, Object>> list = stringRedisTemplate.opsForStream().read(
+                    list = stringRedisTemplate.opsForStream().read(
                             Consumer.from("g1", "c1"),
                             StreamReadOptions.empty().count(1),
                             StreamOffset.create(queueName, ReadOffset.from("0"))
                     );
-                    // 2.判断订单信息是否为空
-                    // 如果为null，说明没有消息，结束
-                    if(list == null || list.isEmpty()){
-                        break;
-                    }
-                    // 解析数据
-                    MapRecord<String, Object, Object> record = list.get(0);
-                    Map<Object, Object> recordValue = record.getValue();
-                    VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(recordValue, new VoucherOrder(), true);
-
-                    // 2.创建订单
-                    handleVoucherOrder(voucherOrder);
-                    //ACK 确认
-                    stringRedisTemplate.opsForStream().acknowledge(queueName, "g1", record.getId());
                 } catch (Exception e) {
-                    log.error("处理PendingList异常", e);
+                    //读不动就退出本轮，别在 while 里空转
+                    log.error("读取 PendingList 失败，退出本轮处理", e);
+                    break;
+                }
+                // 2.判断订单信息是否为空，为空说明 pending 已经清完
+                if (list == null || list.isEmpty()) {
+                    break;
                 }
 
-
+                MapRecord<String, Object, Object> record = list.get(0);
+                try {
+                    Map<Object, Object> recordValue = record.getValue();
+                    VoucherOrder voucherOrder = BeanUtil.fillBeanWithMap(recordValue, new VoucherOrder(), true);
+                    handleVoucherOrder(voucherOrder);
+                } catch (Exception e) {
+                    //处理失败不能就此卡住：下面照常 ACK，把这条丢掉并留下日志人工核对
+                    log.error("处理 PendingList 消息失败，跳过该条，请人工核对：recordId="
+                            + record.getId() + ", value=" + record.getValue(), e);
+                }
+                // 3.ACK 确认。成败都要 ACK：不 ACK 的话 from("0") 下一轮还会读到同一条，
+                //   而它又永远处理不成功 —— 这就是原来的死循环。
+                try {
+                    stringRedisTemplate.opsForStream().acknowledge(queueName, "g1", record.getId());
+                } catch (Exception e) {
+                    log.error("ACK 失败，退出本轮处理：recordId=" + record.getId(), e);
+                    break;
+                }
             }
-
         }
 
     }
@@ -196,6 +205,12 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
             //后台线程里 AopContext 是空的（线程隔离），用 ApplicationContext.getBean 拿容器里的代理
             IVoucherOrderService proxy = applicationContext.getBean(IVoucherOrderService.class);
             proxy.createVoucherOrder(voucherOrder);
+        } catch (DuplicateKeyException e) {
+            //唯一索引 uk_user_voucher 拦下了重复下单，这是 Redis 判断失效时的最后一道防线。
+            //必须在事务外层捕获：让 createVoucherOrder 的事务正常回滚，库存扣减一并撤销；
+            //在这里吃掉异常，消息才能正常 ACK，不会掉进 pending 队列反复重试。
+            log.error("唯一索引拦截重复下单，已忽略：userId=" + voucherOrder.getUserId()
+                    + ", voucherId=" + voucherOrder.getVoucherId(), e);
         } finally {
             // 释放锁
             redisLock.unlock();
