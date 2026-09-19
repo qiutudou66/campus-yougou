@@ -65,7 +65,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 获取登录用户
         Long userId = userDTO.getId();
         //判断是否点赞过
-        String key = "blog:like:" + blog.getId();
+        String key = RedisConstants.BLOG_LIKED_KEY + blog.getId();
         Double score = stringRedisTemplate.opsForZSet().score(key, userId.toString());
         blog.setIsLike(score != null);
     }
@@ -90,9 +90,9 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         // 获取登录用户
         Long userId = UserHolder.getUser().getId();
         //判断是否点赞过
-        String key = "blog:like:" + id;
+        String key = RedisConstants.BLOG_LIKED_KEY + id;
         Double score = stringRedisTemplate.opsForZSet().score(key, userId.toString());
-        if (score != null) {
+        if (score == null) {
             boolean isSuccess = update().setSql("liked = liked + 1").eq("id", id).update();
             if (isSuccess){
                 stringRedisTemplate.opsForZSet().add(key, userId.toString(), System.currentTimeMillis());
@@ -100,7 +100,7 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         }else{
             boolean isSuccess = update().setSql("liked = liked - 1").eq("id", id).update();
             if (isSuccess) {
-                stringRedisTemplate.opsForSet().remove(key, userId.toString());
+                stringRedisTemplate.opsForZSet().remove(key, userId.toString());
             }
         }
 
