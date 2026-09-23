@@ -26,7 +26,8 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -40,12 +41,19 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IShopService {
 
-    // 与课程唯一的区别：线程设为 daemon，否则跑测试时非守护线程会让 JVM 不退出导致 mvn test 卡死
-    private static final ExecutorService CACHE_REBUILD_EXECUTOR = Executors.newFixedThreadPool(10, r -> {
-        Thread t = new Thread(r);
-        t.setDaemon(true);
-        return t;
-    });
+    // 缓存重建线程池。用 ThreadPoolExecutor 显式声明参数（阿里规范禁止 Executors 的无界队列）。
+    // 拒绝策略选 DiscardPolicy：任务被丢弃是安全的 —— 下一个请求发现逻辑过期，仍会触发重建。
+    // 不能用 CallerRunsPolicy，那会让发起请求的用户线程去跑重建，把逻辑过期"永不阻塞"的设计抵消掉。
+    // 线程设为 daemon：否则跑测试时非守护线程会让 JVM 不退出导致 mvn test 卡死。
+    private static final ExecutorService CACHE_REBUILD_EXECUTOR = new ThreadPoolExecutor(
+            10, 10, 0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(100),
+            r -> {
+                Thread t = new Thread(r, "cache-rebuild");
+                t.setDaemon(true);
+                return t;
+            },
+            new ThreadPoolExecutor.DiscardPolicy());
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
@@ -130,7 +138,19 @@ public class ShopServiceImpl extends ServiceImpl<ShopMapper, Shop> implements IS
             return Result.fail("商户id不能为空");
         }
         updateById(shop);
-        stringRedisTemplate.delete(RedisConstants.CACHE_SHOP_KEY + id);
+        // 逻辑过期方案下不能靠"删 Key"来失效：queryWithLogicalExpire 对未命中直接返回 null，
+        // 删了这个店铺就会被一直判成"不存在"、且再也恢复不了。改成把 expireTime 置为当前时间
+        // （isAfter 是严格大于，相等即视为过期），下个请求返回旧数据并抢锁触发异步重建。
+        String key = RedisConstants.CACHE_SHOP_KEY + id;
+        String shopJson = stringRedisTemplate.opsForValue().get(key);
+        if (StrUtil.isNotBlank(shopJson)) {
+            RedisData redisData = JSONUtil.toBean(shopJson, RedisData.class);
+            redisData.setExpireTime(LocalDateTime.now());
+            stringRedisTemplate.opsForValue().set(key, JSONUtil.toJsonStr(redisData));
+        } else {
+            // 本来就没缓存（未预热）→ 直接建一份，否则这个店铺查不到
+            saveShop2Redis(id, 20L);
+        }
         return Result.ok();
     }
 
