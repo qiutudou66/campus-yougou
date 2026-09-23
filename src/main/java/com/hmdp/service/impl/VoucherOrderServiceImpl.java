@@ -28,10 +28,10 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 /**
  * <p>
@@ -61,8 +61,17 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
         SECKILL_SCRIPT.setResultType(Long.class);
     }
 
-    //异步处理线程池
-    private static final ExecutorService SECKILL_ORDER_EXECUTOR = Executors.newSingleThreadExecutor();
+    // 异步处理线程池。用 ThreadPoolExecutor 显式声明参数（阿里规范禁止 Executors 的无界队列）。
+    // 这个池只在 @PostConstruct 里提交一次任务，队列给 1 就够；拒绝策略选 AbortPolicy ——
+    // 提交失败说明消费者没起来，秒杀会整条链路失效，应该在启动时就抛出来而不是静默跑着。
+    private static final ExecutorService SECKILL_ORDER_EXECUTOR = new ThreadPoolExecutor(
+            1, 1, 0L, TimeUnit.MILLISECONDS,
+            new LinkedBlockingQueue<>(1),
+            r -> new Thread(r, "seckill-order-handler"),
+            new ThreadPoolExecutor.AbortPolicy());
+
+    /** 异常后的退避时长，防止 Redis 不可达时消费线程空转刷日志 */
+    private static final long ERROR_BACKOFF_MS = 1000L;
 
     //在类初始化之后执行，因为当这个类初始化好了之后，随时都是有可能要执行的
     @PostConstruct
@@ -109,6 +118,14 @@ public class VoucherOrderServiceImpl extends ServiceImpl<VoucherOrderMapper, Vou
                 } catch (Exception e) {
                     log.error("处理订单异常", e);
                     handlePendingList();
+                    // Redis 不可达时 read 不会等满 2s 的 block 超时，而是立刻抛异常，
+                    // 所以这里不退避的话这个 while 会以 CPU 极限速度空转刷日志（实测几分钟 6.5G）。
+                    try {
+                        Thread.sleep(ERROR_BACKOFF_MS);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
                 }
             }
         }

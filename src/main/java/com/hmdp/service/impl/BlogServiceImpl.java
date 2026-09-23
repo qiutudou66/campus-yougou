@@ -4,20 +4,21 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.BooleanUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.hmdp.config.RabbitMQConfig;
+import com.hmdp.dto.FeedFanoutMessage;
 import com.hmdp.dto.Result;
 import com.hmdp.dto.ScrollResult;
 import com.hmdp.dto.UserDTO;
 import com.hmdp.entity.Blog;
-import com.hmdp.entity.Follow;
 import com.hmdp.entity.User;
 import com.hmdp.mapper.BlogMapper;
 import com.hmdp.service.IBlogService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.hmdp.service.IFollowService;
 import com.hmdp.service.IUserService;
 import com.hmdp.utils.RedisConstants;
 import com.hmdp.utils.SystemConstants;
 import com.hmdp.utils.UserHolder;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Service;
@@ -38,11 +39,11 @@ import java.util.stream.Collectors;
 public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IBlogService {
     @Resource
     private IUserService userService;
-    @Resource
-    private IFollowService followService;
 
     @Resource
     private StringRedisTemplate stringRedisTemplate;
+    @Resource
+    private RabbitTemplate rabbitTemplate;
 
     @Override
     public Result queryHotBlogById(Long id) {
@@ -134,14 +135,13 @@ public class BlogServiceImpl extends ServiceImpl<BlogMapper, Blog> implements IB
         if(! isSuccess){
             return Result.fail("保存失败");
         }
-        List<Follow> follows = followService.query().eq("follow_user_id", userDTO.getId()).list();
-        if (follows != null && !follows.isEmpty()) {
-            for (Follow follow : follows) {
-                Long userId = follow.getUserId();
-                stringRedisTemplate.opsForZSet()
-                        .add(RedisConstants.FEED_KEY + userId, blog.getId().toString(), System.currentTimeMillis());
-            }
-        }
+        // 扇出改成异步：接口耗时不再随粉丝数增长，也不用在这儿等 N 次 Redis 写入。
+        // ts 在这里取一次就固定进消息，消费者拿它当 score —— 重复消费时 score 不变，所以幂等。
+        long ts = System.currentTimeMillis();
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.FEED_EXCHANGE,
+                RabbitMQConfig.FEED_ROUTING_KEY,
+                new FeedFanoutMessage(blog.getId(), userDTO.getId(), ts));
         return Result.ok(blog.getId());
     }
 

@@ -5,7 +5,9 @@ spring:
     name: hmdp
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC
+    # allowPublicKeyRetrieval: MySQL8 的 caching_sha2_password 在非 TLS 连接上需要向服务端取 RSA 公钥，
+    # 老版 connector(5.1.47) 默认禁止；服务端 auth cache 一失效（重启/闲置 8h）就会连不上。
+    url: jdbc:mysql://127.0.0.1:3306/hmdp?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     username: root
     password: 123456
   redis:
@@ -18,6 +20,20 @@ spring:
         max-idle: 10
         min-idle: 1
         time-between-eviction-runs: 10s
+  rabbitmq:
+    host: 127.0.0.1
+    port: 5672
+    username: guest
+    password: guest
+    publisher-confirm-type: correlated # 消息是否真的到了 broker 要能拿到，丢了才有痕
+    listener:
+      simple:
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          multiplier: 2
+        default-requeue-rejected: false # 重试耗尽后 nack 且不重回队列，交给死信交换机
   jackson:
     default-property-inclusion: non_null # JSON处理时忽略非空字段
 mybatis-plus:
