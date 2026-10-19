@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.time.ZoneId;
 import java.util.List;
 
 /**
@@ -39,8 +40,8 @@ public class FeedFanoutReconcileTask {
 
     @Scheduled(initialDelay = 60_000, fixedDelay = 5 * 60_000)
     public void republishMissedFanout() {
-        // 时间比较整个放在 MySQL 里做（create_time 和 NOW() 同一个时钟），
-        // 不跨 JDBC 边界传时间，避开驱动 serverTimezone=UTC 和 JVM 时区不一致的坑。
+        // 筛选条件整个放在 MySQL 里做（create_time 和 NOW() 同一个时钟），
+        // 不把「当前时间」当参数传进去比，省得踩驱动 serverTimezone 和 JVM 时区不一致的坑。
         List<Blog> recentBlogs = blogService.query()
                 .apply("create_time >= DATE_SUB(NOW(), INTERVAL " + RECENT_MINUTES + " MINUTE)")
                 .last("LIMIT " + MAX_SCAN)
@@ -52,7 +53,18 @@ public class FeedFanoutReconcileTask {
             if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(doneKey))) {
                 continue;
             }
-            long ts = System.currentTimeMillis();
+            // score 必须用博文自己的发布时间，不能用「现在」：
+            // 补发的是几分钟前的旧博文，取当前时间会把它顶到粉丝 feed 的最前面，打乱时间序。
+            //
+            // 时区警告：驱动对 LocalDateTime 不做任何换算，是【原样透传】MySQL 按会话时区
+            // 渲染出的墙上时钟（实测：改会话时区，读出的字符串跟着变）。所以下面这行
+            // .atZone(systemDefault()) 成立的前提是【MySQL 会话时区 == JVM 时区】——
+            // 本机两边都是 Asia/Shanghai，实测 delta=0。注意 URL 里的 serverTimezone=UTC
+            // 对这条 java.time 路径不起作用，别被它误导。
+            // 一旦 MySQL 被搬到 UTC 环境（Docker 官方镜像、多数云服务器默认 UTC），这里会
+            // 静默偏 -8h：补发的博文会沉到 feed 底部而不是顶部。要根治就改用
+            // UNIX_TIMESTAMP(create_time)*1000 让 MySQL 自己算 epoch（TIMESTAMP 列该值不受会话时区影响）。
+            long ts = blog.getCreateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.FEED_EXCHANGE,
                     RabbitMQConfig.FEED_ROUTING_KEY,

@@ -27,12 +27,13 @@ public class RabbitMQConfig {
 
     public static final String FEED_DLX = "feed.dlx";
     public static final String FEED_DLQ = "feed.dlq.queue";
-
+//建交换机
     @Bean
     public DirectExchange feedExchange() {
         return new DirectExchange(FEED_EXCHANGE, true, false);
     }
 
+    //建队列
     @Bean
     public Queue feedQueue() {
         return QueueBuilder.durable(FEED_QUEUE)
@@ -40,16 +41,19 @@ public class RabbitMQConfig {
                 .build();
     }
 
+    //绑定队列和交换机
     @Bean
     public Binding feedBinding() {
         return BindingBuilder.bind(feedQueue()).to(feedExchange()).with(FEED_ROUTING_KEY);
     }
 
+    //建死信交换机
     @Bean
     public DirectExchange feedDlx() {
         return new DirectExchange(FEED_DLX, true, false);
     }
 
+    //建死信队列
     @Bean
     public Queue feedDlq() {
         return QueueBuilder.durable(FEED_DLQ).build();
@@ -58,6 +62,7 @@ public class RabbitMQConfig {
     /**
      * 死信沿用原路由键（没配 x-dead-letter-routing-key），所以这里用同一个 routing key 绑定。
      */
+    //绑定死信队列和死信交换机
     @Bean
     public Binding feedDlqBinding() {
         return BindingBuilder.bind(feedDlq()).to(feedDlx()).with(FEED_ROUTING_KEY);
@@ -66,6 +71,7 @@ public class RabbitMQConfig {
     /**
      * 消息体走 JSON，别用默认的 JDK 序列化（那东西对端不是 Java 就读不了，也难看）。
      */
+    //消息转换器
     @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();

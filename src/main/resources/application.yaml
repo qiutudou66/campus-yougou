@@ -25,7 +25,6 @@ spring:
     port: 5672
     username: guest
     password: guest
-    publisher-confirm-type: correlated # 消息是否真的到了 broker 要能拿到，丢了才有痕
     listener:
       simple:
         retry:
