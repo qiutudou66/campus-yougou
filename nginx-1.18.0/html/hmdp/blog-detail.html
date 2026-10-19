@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <meta name="theme-color" content="#1F8A70">
+  <title>校园优购</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/blog-detail.css" rel="stylesheet">
+  <link href="./css/main.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
+    <div class="header-title">校园动态</div>
+    <div class="header-share" @click="goChat"><i class="el-icon-chat-dot-round"></i></div>
+  </div>
+
+  <div class="blog-scroll">
+    <div class="blog-info-box" ref="swiper"
+         @touchstart="moveStart"
+         @touchmove="moving"
+         @touchend="moveEnd">
+      <div class="swiper-item" v-for="(img, i) in blog.images" :key="i">
+        <img :src="img" alt="">
+      </div>
+    </div>
+
+    <div class="basic">
+      <div class="basic-icon" @click="toOtherInfo">
+        <img :src="blog.icon || '/imgs/icons/default-icon.png'" alt="">
+      </div>
+      <div class="basic-info">
+        <div class="name">{{blog.name}}</div>
+        <span class="time">{{formatTime(new Date(blog.createTime))}}</span>
+      </div>
+      <div v-show="!user || user.id !== blog.userId">
+        <div class="logout-btn" :class="{followed: followed}" @click="follow">
+          {{followed ? '已关注' : '关注'}}
+        </div>
+      </div>
+    </div>
+
+    <div class="blog-text" v-html="blog.content"></div>
+
+    <div class="shop-basic" @click="toShopDetail">
+      <div class="shop-icon">
+        <img :src="shop.image" alt="">
+      </div>
+      <div class="shop-basic-info">
+        <div class="name">{{shop.name}}</div>
+        <el-rate disabled v-model="shop.score/10"></el-rate>
+        <div class="shop-avg" v-if="shop.avgPrice > 0">￥{{shop.avgPrice}}/人</div>
+      </div>
+      <div class="shop-go"><i class="el-icon-arrow-right"></i></div>
+    </div>
+
+    <div class="zan-box">
+      <div class="zan-list">
+        <div class="user-icon-mini" v-for="u in likes" :key="u.id">
+          <img :src="u.icon || '/imgs/icons/default-icon.png'" alt="">
+        </div>
+        <div class="zan-text">{{blog.liked || 0}}人点赞</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div class="action-btn" :class="{liked: blog.isLike}" @click="addLike">
+      <i :class="blog.isLike ? 'el-icon-star-on' : 'el-icon-star-off'"></i>
+      <span>{{blog.liked}}</span>
+    </div>
+    <div class="action-btn main" @click="goChat">
+      <i class="el-icon-chat-line-round"></i>问问 AI 助手
+    </div>
+    <div class="action-btn" @click="share">
+      <i class="el-icon-share"></i>
+    </div>
+  </div>
+</div>
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script>
+  let each = function (ary, callback) {
+    for (let i = 0, l = ary.length; i < l; i++) {
+      if (callback(ary[i], i) === false) break
+    }
+  }
+  const app = new Vue({
+    el: "#app",
+    data: {
+      util,
+      blog: {},
+      shop: {},
+      likes: [],
+      user: {},
+      followed: false,
+      _width: 0,
+      duration: 300,
+      container: null,
+      items: [],
+      active: 0,
+      start: {x: 0, y: 0},
+      move: {x: 0, y: 0},
+      sensitivity: 60,
+      resistance: 0.3
+    },
+    created() {
+      let id = util.getUrlParam("id");
+      this.queryBlogById(id);
+    },
+    methods: {
+      init() {
+        this.container = this.$refs.swiper
+        this.items = this.container.querySelectorAll('.swiper-item')
+        this.updateItemWidth()
+        this.setTransform()
+        this.setTransition('none')
+      },
+      goBack() {
+        history.back();
+      },
+      goChat() {
+        location.href = "/chat.html";
+      },
+      toShopDetail() {
+        if (this.shop.id) location.href = "/shop-detail.html?id=" + this.shop.id;
+      },
+      share() {
+        this.$message({message: "链接已复制，快分享给同学吧", type: "success", duration: 1500});
+      },
+      toOtherInfo() {
+        if (this.blog.userId === this.user.id) {
+          location.href = "/info.html"
+        } else {
+          location.href = "/other-info.html?id=" + this.blog.userId
+        }
+      },
+      queryBlogById(id) {
+        axios.get("/blog/" + id)
+          .then(({data}) => {
+            data.images = data.images.split(",")
+            this.blog = data;
+            this.$nextTick(this.init);
+            this.queryShopById(data.shopId)
+            this.queryLikeList(id);
+            this.queryLoginUser();
+          })
+          .catch(err => this.$message.error(err))
+      },
+      queryShopById(shopId) {
+        axios.get("/shop/" + shopId)
+          .then(({data}) => {
+            data.image = data.images.split(",")[0]
+            this.shop = data
+          })
+          .catch(err => this.$message.error(err))
+      },
+      queryLikeList(id) {
+        axios.get("/blog/likes/" + id)
+          .then(({data}) => this.likes = data)
+          .catch(err => this.$message.error(err))
+      },
+      addLike() {
+        axios.put("/blog/like/" + this.blog.id)
+          .then(() => {
+            axios.get("/blog/" + this.blog.id)
+              .then(({data}) => {
+                data.images = data.images.split(",")
+                this.blog = data;
+                this.queryLikeList(this.blog.id);
+              })
+              .catch(err => this.$message.error(err))
+          })
+          .catch(err => this.$message.error(err))
+      },
+      isFollowed() {
+        axios.get("/follow/or/not/" + this.blog.userId)
+          .then(({data}) => this.followed = data)
+          .catch(err => this.$message.error(err))
+      },
+      follow() {
+        if (!token) {
+          this.$message.error("请先登录")
+          setTimeout(() => location.href = "/login.html", 200);
+          return;
+        }
+        axios.put("/follow/" + this.blog.userId + "/" + !this.followed)
+          .then(() => {
+            this.$message.success(this.followed ? "已取消关注" : "已关注")
+            this.followed = !this.followed
+          })
+          .catch(err => this.$message.error(err))
+      },
+      formatTime(b) {
+        return b.getFullYear() + "年" + (b.getMonth() + 1) + "月" + b.getDate() + "日";
+      },
+      queryLoginUser() {
+        axios.get("/user/me")
+          .then(({data}) => {
+            this.user = data;
+            if (this.user.id !== this.blog.userId) {
+              this.isFollowed();
+            }
+          })
+          .catch(console.log)
+      },
+      updateItemWidth() {
+        this._width = this.container.offsetWidth || document.documentElement.offsetWidth
+      },
+      setTransform(offset) {
+        offset = offset || 0
+        each(this.items, (item, i) => {
+          let distance = (i - this.active) * this._width + offset
+          let transform = `translate3d(${distance}px, 0, 0)`
+          item.style.webkitTransform = transform
+          item.style.transform = transform
+        })
+      },
+      setTransition(duration) {
+        duration = duration || this.duration
+        duration = typeof duration === 'number' ? (duration + 'ms') : duration
+        each(this.items, (item) => {
+          item.style.webkitTransition = duration
+          item.style.transition = duration
+        })
+      },
+      moveStart(e) {
+        this.start.x = e.changedTouches[0].pageX
+        this.start.y = e.changedTouches[0].pageY
+        this.setTransition('none')
+      },
+      moving(e) {
+        e.preventDefault()
+        e.stopPropagation()
+        let distanceX = e.changedTouches[0].pageX - this.start.x
+        let distanceY = e.changedTouches[0].pageY - this.start.y
+        if (Math.abs(distanceX) > Math.abs(distanceY)) {
+          this.isMoving = true
+          this.move.x = this.start.x + distanceX
+          this.move.y = this.start.y + distanceY
+          if ((this.active === 0 && distanceX > 0) || (this.active === (this.items.length - 1) && distanceX < 0)) {
+            distanceX = distanceX * this.resistance
+          }
+          this.setTransform(distanceX)
+        }
+      },
+      moveEnd(e) {
+        if (this.isMoving) {
+          e.preventDefault()
+          e.stopPropagation()
+          let distance = this.move.x - this.start.x
+          if (Math.abs(distance) > this.sensitivity) {
+            if (distance < 0) {
+              this.next()
+            } else {
+              this.prev()
+            }
+          } else {
+            this.back()
+          }
+          this.reset()
+          this.isMoving = false
+        }
+      },
+      next() {
+        this.go(this.active + 1)
+      },
+      prev() {
+        this.go(this.active - 1)
+      },
+      reset() {
+        this.start.x = 0
+        this.start.y = 0
+        this.move.x = 0
+        this.move.y = 0
+      },
+      back() {
+        this.setTransition()
+        this.setTransform()
+      },
+      go(index) {
+        this.active = index
+        if (this.active < 0) {
+          this.active = 0
+        } else if (this.active > this.items.length - 1) {
+          this.active = this.items.length - 1
+        }
+        this.setTransition()
+        this.setTransform()
+      }
+    }
+  })
+</script>
+</body>
+</html>

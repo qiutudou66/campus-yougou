@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <meta name="theme-color" content="#1F8A70">
+  <title>校园优购</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/main.css" rel="stylesheet">
+  <link href="./css/info.css" rel="stylesheet">
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-back-btn" @click="goBack"><i class="el-icon-arrow-left"></i></div>
+    <div class="header-title">我的</div>
+    <div class="header-back-btn"></div>
+  </div>
+
+  <div class="basic">
+    <div class="basic-icon">
+      <img :src="user.icon || '/imgs/icons/default-icon.png'" alt="">
+    </div>
+    <div class="basic-info">
+      <div class="name">{{user.nickName}}</div>
+      <span>星城大学 · 在读</span>
+      <div class="edit-btn" @click="toEdit">编辑资料</div>
+    </div>
+    <div class="logout-btn" @click="logout">退出登录</div>
+  </div>
+
+  <div class="introduce">
+    <span v-if="info.introduce">{{info.introduce}}</span>
+    <span v-else>还没有简介，点「编辑资料」介绍一下自己吧</span>
+  </div>
+
+  <div class="content">
+    <el-tabs v-model="activeName" @tab-click="handleClick">
+      <el-tab-pane label="我的动态" name="1">
+        <div v-for="b in blogs" :key="b.id" class="blog-item" @click="toBlogDetail(b)">
+          <div class="blog-img"><img :src="b.images.split(',')[0]" alt=""></div>
+          <div class="blog-info">
+            <div class="blog-title">{{b.title}}</div>
+            <div class="blog-stats">
+              <div class="blog-liked"><img src="/imgs/thumbup.png" alt=""> {{b.liked}}</div>
+              <div class="blog-comments"><i class="el-icon-chat-dot-round"></i> {{b.comments}}</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-empty" v-if="!blogs.length">
+          <i class="el-icon-edit-outline"></i>
+          还没有发布动态，去记录你的校园生活吧
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="评价" name="2">
+        <div class="tab-empty">
+          <i class="el-icon-chat-square"></i>
+          暂无评价
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="粉丝" name="3">
+        <div class="tab-empty">
+          <i class="el-icon-user"></i>
+          还没有粉丝
+        </div>
+      </el-tab-pane>
+
+      <el-tab-pane label="关注" name="4">
+        <div class="blog-list" @scroll="onScroll">
+          <div class="blog-box" v-for="b in blogs2" :key="b.id">
+            <div class="blog-img2" @click="toBlogDetail(b)"><img :src="b.img" alt=""></div>
+            <div class="blog-title">{{b.title}}</div>
+            <div class="blog-foot">
+              <div class="blog-user-icon"><img :src="b.icon || '/imgs/icons/default-icon.png'" alt=""></div>
+              <div class="blog-user-name">{{b.name}}</div>
+              <div class="blog-liked" @click="addLike(b)">
+                <i class="el-icon-star-on" :style="{color: b.isLike ? '#F4A261' : '#A9B2AF'}"></i>
+                {{b.liked}}
+              </div>
+            </div>
+          </div>
+          <div class="tab-empty" v-if="!blogs2.length">
+            <i class="el-icon-star-off"></i>
+            还没有关注的同学
+          </div>
+        </div>
+      </el-tab-pane>
+    </el-tabs>
+  </div>
+
+  <div class="ai-fab" @click="goChat">
+    <i class="el-icon-chat-line-round"></i>
+    <span>AI助手</span>
+  </div>
+
+  <foot-bar :active-btn="4"></foot-bar>
+</div>
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script src="./js/footer.js"></script>
+<script>
+  const app = new Vue({
+    el: "#app",
+    data: {
+      user: "",
+      activeName: "1",
+      info: {},
+      blogs: [],
+      blogs2: [],
+      params: {
+        minTime: 0,
+        offset: 0,
+      },
+      count: 5,
+      isReachBottom: false,
+    },
+    created() {
+      this.queryUser();
+    },
+    methods: {
+      queryBlogs() {
+        axios.get("/blog/of/me")
+          .then(({data}) => this.blogs = data)
+          .catch(err => this.$message.error(err))
+      },
+      queryBlogsOfFollow(clear) {
+        if (clear) {
+          this.params.offset = 0;
+          this.params.minTime = new Date().getTime() + 1;
+        }
+        let {minTime, offset: os} = this.params;
+        axios.get("/blog/of/follow", {
+          params: {offset: os, lastId: minTime || new Date().getTime() + 1}
+        })
+          .then(({data}) => {
+            if (!data) {
+              return;
+            }
+            let {list, ...params} = data;
+            list.forEach(b => b.img = b.images.split(",")[0])
+            this.blogs2 = clear ? list : this.blogs2.concat(list);
+            this.params = params;
+          })
+          .catch(e => console.log(e))
+      },
+      queryUser() {
+        axios.get("/user/me")
+          .then(({data}) => {
+            this.user = data;
+            this.queryUserInfo();
+            this.queryBlogs();
+          })
+          .catch(err => {
+            location.href = "login.html"
+          })
+      },
+      goBack() {
+        location.href = "/";
+      },
+      goChat() {
+        location.href = "/chat.html";
+      },
+      queryUserInfo() {
+        axios.get("/user/info/" + this.user.id)
+          .then(({data}) => {
+            if (!data) {
+              return
+            }
+            this.info = data;
+            sessionStorage.setItem("userInfo", JSON.stringify(data))
+          })
+          .catch(err => {
+            this.$message.error(err);
+          })
+      },
+      toEdit() {
+        location.href = 'info-edit.html'
+      },
+      toBlogDetail(b) {
+        location.href = "/blog-detail.html?id=" + b.id;
+      },
+      logout() {
+        axios.post("/user/logout")
+          .then(() => {
+            sessionStorage.removeItem("token")
+            location.href = "/"
+          })
+          .catch(err => this.$message.error(err))
+      },
+      handleClick(r) {
+        if (r.name === '4') {
+          this.queryBlogsOfFollow(true);
+        }
+      },
+      addLike(b) {
+        axios.put("/blog/like/" + b.id)
+          .then(() => {
+            this.queryBlogById(b);
+          })
+          .catch(err => {
+            this.$message.error(err)
+          })
+      },
+      queryBlogById(b) {
+        axios.get("/blog/" + b.id)
+          .then(({data}) => {
+            b.liked = data.liked;
+            b.isLike = data.isLike;
+          })
+          .catch(() => {
+            b.liked++;
+          })
+      },
+      onScroll(e) {
+        let scrollTop = e.target.scrollTop;
+        let offsetHeight = e.target.offsetHeight;
+        let scrollHeight = e.target.scrollHeight;
+        if (scrollTop === 0) {
+          this.queryBlogsOfFollow(true);
+        } else if (scrollTop + offsetHeight + 1 > scrollHeight && !this.isReachBottom) {
+          this.isReachBottom = true
+          this.queryBlogsOfFollow();
+        } else {
+          this.isReachBottom = false
+        }
+      }
+    },
+  })
+</script>
+</body>
+</html>

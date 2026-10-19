@@ -1,0 +1,409 @@
+#app {
+    background: var(--bg);
+    overflow-y: auto;
+}
+
+/* 顶部 */
+.header {
+    width: 100%;
+    height: 52px;
+    line-height: 52px;
+    background: rgba(255, 255, 255, .96);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    position: fixed;
+    top: 0;
+    z-index: 500;
+    box-sizing: border-box;
+}
+
+.top-bar {
+    height: 52px;
+}
+
+.header-back-btn {
+    width: 44px;
+    padding-left: 12px;
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-share {
+    width: 44px;
+    text-align: center;
+    font-size: 18px;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+/* 店铺头图 */
+.shop-banner {
+    position: relative;
+    height: 200px;
+    background: var(--primary-soft);
+}
+
+.shop-banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.shop-banner::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 60px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, .28));
+}
+
+/* 店铺信息卡 */
+.shop-info-box {
+    margin: -34px 12px 0;
+    position: relative;
+    z-index: 2;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--shadow);
+}
+
+.shop-title {
+    font-size: 19px;
+    font-weight: 700;
+    margin: 0 0 8px;
+    color: var(--text);
+}
+
+.shop-rate {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 6px 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.shop-rate .el-rate {
+    display: inline-flex;
+    align-items: center;
+}
+
+.shop-rate .el-rate__icon {
+    font-size: 15px;
+    margin-right: 2px;
+}
+
+.shop-rate .el-rate__text {
+    color: var(--accent) !important;
+    font-weight: 700;
+    font-size: 14px !important;
+}
+
+.shop-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 10px 0 12px;
+}
+
+.meta-tag {
+    font-size: 11px;
+    line-height: 20px;
+    padding: 0 8px;
+    border-radius: 6px;
+    color: var(--primary);
+    background: var(--primary-soft);
+}
+
+.meta-tag.rank {
+    color: #A85D1E;
+    background: linear-gradient(-248deg, #FFEBCF 2%, #FFF3E8 61%);
+}
+
+.shop-line {
+    display: flex;
+    align-items: center;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 8px 0;
+    border-top: 1px solid var(--line);
+}
+
+.shop-line i {
+    color: var(--primary);
+    margin-right: 6px;
+    font-size: 14px;
+}
+
+.shop-line span {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+/* 优惠券 */
+.shop-voucher {
+    margin: 12px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+}
+
+.voucher-head {
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.voucher-icon {
+    display: inline-block;
+    line-height: 18px;
+    border-radius: 5px;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    padding: 0 5px;
+    margin-right: 6px;
+    font-weight: 400;
+}
+
+.voucher-box {
+    display: flex;
+    align-items: stretch;
+    background: #FFF8F1;
+    border: 1px solid #FBE3C8;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+}
+
+.voucher-box:last-child {
+    margin-bottom: 0;
+}
+
+.voucher-left {
+    flex: 1;
+    min-width: 0;
+    padding: 12px;
+}
+
+.voucher-title {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.voucher-subtitle {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 3px;
+}
+
+.voucher-price {
+    color: #E76F2E;
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 8px;
+    display: flex;
+    align-items: baseline;
+}
+
+.voucher-price span {
+    margin-left: 8px;
+    font-size: 10px;
+    font-weight: 400;
+    color: #E76F2E;
+    background: #FCE5D6;
+    border-radius: 4px;
+    padding: 1px 5px;
+}
+
+.voucher-right {
+    flex: none;
+    width: 96px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-left: 1px dashed #F2D3B4;
+    padding: 10px;
+}
+
+.voucher-btn {
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    line-height: 30px;
+    min-width: 68px;
+    padding: 0 10px;
+    text-align: center;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+.voucher-btn:active {
+    opacity: .85;
+}
+
+.disable-btn {
+    background: #C4CBC8;
+    cursor: not-allowed;
+}
+
+.seckill-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 10px;
+}
+
+.seckill-stock {
+    color: var(--muted);
+    margin-top: 5px;
+}
+
+.seckill-stock span {
+    color: #E76F2E;
+    font-weight: 600;
+}
+
+.seckill-time {
+    color: var(--muted);
+    margin-top: 2px;
+    font-size: 9px;
+}
+
+.empty-voucher {
+    color: var(--muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 14px 0;
+}
+
+/* 评价 */
+.shop-comments {
+    margin: 12px;
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 14px;
+    box-shadow: var(--shadow);
+}
+
+.comments-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.comments-head span {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--muted);
+}
+
+.comment-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0;
+}
+
+.tag {
+    font-size: 11px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 3px 10px;
+    color: var(--muted);
+    background: #FAFBFB;
+}
+
+.comment-list {
+    margin-top: 4px;
+}
+
+.comment-box {
+    display: flex;
+    padding: 12px 0;
+    border-top: 1px solid var(--line);
+}
+
+.comment-icon {
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--primary-soft);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 600;
+    margin-right: 10px;
+}
+
+.comment-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.comment-user {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.comment-user span {
+    font-size: 9px;
+    padding: 0 6px;
+    line-height: 15px;
+    border-radius: 8px;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: 400;
+}
+
+.comment-text {
+    font-size: 13px;
+    color: #4B5563;
+    line-height: 1.6;
+    padding: 6px 0 2px;
+}
+
+.comment-meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+}
+
+.copyright {
+    color: #B7BFBC;
+    margin: 20px 0 30px;
+    font-size: 11px;
+    text-align: center;
+}

@@ -1,0 +1,279 @@
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: var(--bg);
+}
+
+.header {
+    flex: none;
+    background: var(--card);
+}
+
+.header-back-btn {
+    width: 44px;
+    padding-left: 12px;
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.header-share {
+    width: 44px;
+    text-align: center;
+    font-size: 18px;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.blog-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 16px;
+}
+
+/* 图片轮播 */
+.blog-info-box {
+    position: relative;
+    overflow: hidden;
+    height: 260px;
+    width: 100%;
+    background: var(--primary-soft);
+}
+
+.swiper-item {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.swiper-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+}
+
+/* 作者 */
+.basic {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px 6px;
+}
+
+.basic-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--primary-soft);
+    flex: none;
+}
+
+.basic-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.basic-info {
+    flex: 1;
+    min-width: 0;
+    padding-left: 10px;
+}
+
+.basic-info .name {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+}
+
+.basic-info .time {
+    display: block;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+}
+
+.logout-btn {
+    width: 76px;
+    height: 28px;
+    line-height: 26px;
+    border-radius: 14px;
+    text-align: center;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.logout-btn.followed {
+    border-color: var(--line);
+    color: var(--muted);
+}
+
+/* 正文 */
+.blog-text {
+    padding: 8px 16px 14px;
+    font-size: 14.5px;
+    line-height: 1.75;
+    color: #374151;
+    word-break: break-word;
+}
+
+/* 关联店铺 */
+.shop-basic {
+    margin: 0 16px 14px;
+    background: var(--card);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+}
+
+.shop-icon {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--primary-soft);
+}
+
+.shop-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.shop-basic-info {
+    flex: 1;
+    min-width: 0;
+    padding-left: 12px;
+}
+
+.shop-basic-info .name {
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shop-basic-info .el-rate {
+    margin-top: 2px;
+}
+
+.shop-basic-info .el-rate__icon {
+    font-size: 13px;
+    margin-right: 1px;
+}
+
+.shop-avg {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 2px;
+}
+
+.shop-go {
+    color: var(--muted);
+    font-size: 18px;
+    padding-left: 8px;
+}
+
+/* 点赞 */
+.zan-box {
+    width: auto;
+    margin: 0 16px;
+    padding: 10px 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.zan-list {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.user-icon-mini {
+    margin-left: -6px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    padding: 1px;
+    background: #fff;
+    box-shadow: 0 0 3px 1px rgba(0, 0, 0, .06);
+    overflow: hidden;
+}
+
+.user-icon-mini:first-child {
+    margin-left: 0;
+}
+
+.user-icon-mini img {
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.zan-text {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+/* 底部操作条 */
+.foot {
+    position: static;
+    flex: none;
+    height: 56px;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.action-btn i {
+    font-size: 21px;
+}
+
+.action-btn.liked {
+    color: var(--accent);
+}
+
+.action-btn.main {
+    flex: 1;
+    justify-content: center;
+    height: 36px;
+    border-radius: 18px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 13px;
+    max-width: 180px;
+    margin: 0 auto;
+}

@@ -1,0 +1,375 @@
+#app {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.header {
+    flex: none;
+    width: 100%;
+    height: 52px;
+    line-height: 52px;
+    display: flex;
+    align-items: center;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+}
+
+.header-back-btn {
+    width: 44px;
+    padding-left: 12px;
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.header-title {
+    flex: 1;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* 个人信息卡 */
+.basic {
+    flex: none;
+    display: flex;
+    align-items: flex-start;
+    padding: 18px 16px 14px;
+    background: linear-gradient(180deg, #166A56 0%, var(--primary) 100%);
+    color: #fff;
+}
+
+.basic-icon {
+    flex: none;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: rgba(255, 255, 255, .3);
+    border: 2px solid rgba(255, 255, 255, .8);
+}
+
+.basic-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.basic-info {
+    flex: 1;
+    min-width: 0;
+    padding: 2px 0 0 12px;
+}
+
+.basic-info .name {
+    font-weight: 600;
+    font-size: 17px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.basic-info span {
+    display: inline-block;
+    font-size: 11px;
+    padding: 1px 8px;
+    background: rgba(255, 255, 255, .18);
+    border-radius: 10px;
+    margin: 6px 0 8px;
+}
+
+.edit-btn {
+    display: inline-block;
+    line-height: 24px;
+    padding: 0 12px;
+    border-radius: 12px;
+    text-align: center;
+    font-size: 12px;
+    border: 1px solid rgba(255, 255, 255, .7);
+    cursor: pointer;
+}
+
+.logout-btn {
+    flex: none;
+    margin-top: 2px;
+    height: 24px;
+    line-height: 24px;
+    padding: 0 10px;
+    font-size: 11px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, .12);
+    cursor: pointer;
+}
+
+.introduce {
+    flex: none;
+    padding: 2px 16px 24px;
+    background: var(--primary);
+    font-size: 12px;
+    color: rgba(255, 255, 255, .85);
+}
+
+.introduce span {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Tab 区 */
+.content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    border-radius: 16px 16px 0 0;
+    margin-top: -14px;
+    position: relative;
+    z-index: 2;
+}
+
+.content .el-tabs {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.content .el-tabs__header {
+    margin: 0;
+    padding: 0 6px;
+    background: var(--card);
+    border-radius: 16px 16px 0 0;
+    flex: none;
+}
+
+.content .el-tabs__nav-wrap::after {
+    height: 1px;
+    background: var(--line);
+}
+
+.content .el-tabs__content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px 70px;
+}
+
+.el-tab-pane {
+    height: auto;
+}
+
+/* 我的动态 */
+.blog-item {
+    display: flex;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+}
+
+.blog-img {
+    flex: none;
+    width: 78px;
+    height: 78px;
+    margin-right: 12px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--primary-soft);
+}
+
+.blog-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.blog-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.blog-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.blog-liked, .blog-comments {
+    font-size: 11px;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+}
+
+.blog-liked img {
+    width: 14px;
+    height: 14px;
+    margin-right: 3px;
+    opacity: .7;
+}
+
+.blog-comments i {
+    font-size: 13px;
+    margin-right: 2px;
+}
+
+.blog-stats {
+    display: flex;
+    gap: 14px;
+}
+
+/* 关注列表 */
+.blog-list {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.blog-box {
+    width: 100%;
+    background: var(--card);
+    margin: 0 0 10px;
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.blog-img2 {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--primary-soft);
+}
+
+.blog-img2 img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.blog-box .blog-title {
+    padding: 8px 10px 0;
+    font-size: 13px;
+}
+
+.blog-foot {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 8px 10px 10px;
+    font-size: 11px;
+    color: var(--muted);
+}
+
+.blog-user-icon {
+    width: 18px;
+    height: 18px;
+    margin-right: 5px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex: none;
+}
+
+.blog-user-name {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.blog-user-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.blog-liked {
+    width: auto;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    cursor: pointer;
+}
+
+.blog-liked svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* 空状态 */
+.tab-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 50px 0;
+}
+
+.tab-empty i {
+    display: block;
+    font-size: 32px;
+    color: #CBD5D1;
+    margin-bottom: 10px;
+}
+
+/* 资料编辑页（共用一个 css） */
+.edit-container {
+    background: var(--bg);
+    padding: 12px;
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 80px;
+}
+
+.divider {
+    display: none;
+}
+
+.info-box {
+    margin-bottom: 10px;
+    padding: 0 14px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    line-height: 48px;
+    font-size: 14px;
+    border-bottom: 1px solid var(--line);
+}
+
+.info-item:last-child {
+    border-bottom: 0;
+}
+
+.info-btn {
+    display: flex;
+    align-items: center;
+    color: var(--muted);
+}
+
+.info-btn div {
+    margin-left: 6px;
+}

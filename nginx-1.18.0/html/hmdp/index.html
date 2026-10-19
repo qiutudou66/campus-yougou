@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0">
+  <meta name="theme-color" content="#1F8A70">
+  <title>校园优购</title>
+  <link rel="stylesheet" href="./css/element.css">
+  <link href="./css/index.css" rel="stylesheet">
+  <link href="./css/main.css" rel="stylesheet">
+</head>
+<body>
+<div id="app" class="page-home">
+  <header class="home-top">
+    <div class="home-top-row">
+      <el-dropdown trigger="click" @command="switchCampus">
+        <span class="campus-pill">{{campus}} <i class="el-icon-arrow-down"></i></span>
+        <el-dropdown-menu slot="dropdown">
+          <el-dropdown-item v-for="c in campuses" :key="c" :command="c">{{c}}</el-dropdown-item>
+        </el-dropdown-menu>
+      </el-dropdown>
+      <div class="home-icons">
+        <i class="el-icon-chat-dot-round" @click="goChat"></i>
+        <i class="el-icon-user" @click="toPage"></i>
+      </div>
+    </div>
+    <div class="search-box" @click="toShopList(1,'食堂餐厅')">
+      <i class="el-icon-search"></i>
+      <span>搜店铺、地点、优惠</span>
+    </div>
+  </header>
+
+  <div class="type-grid">
+    <div class="type-box" v-for="t in types" :key="t.id" @click="toShopList(t.id, t.name)">
+      <div class="type-icon">{{t.emoji}}</div>
+      <div class="type-text">{{t.name}}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <div class="section-title">今日优惠</div>
+      <div class="section-more" @click="toShopList(1,'食堂餐厅')">更多 ›</div>
+    </div>
+    <div class="promo-scroll">
+      <div class="promo-card" v-for="p in promos" :key="p.id" @click="toShopDetail(p.shopId)">
+        <div class="promo-shop">{{p.shopName}}</div>
+        <div class="promo-title">{{p.title}}</div>
+        <div class="promo-price">￥{{util.formatPrice(p.payValue)}}<span>{{discount(p)}}折</span></div>
+      </div>
+      <div class="empty-tip" v-if="!promos.length">暂无优惠</div>
+    </div>
+  </div>
+
+  <div class="section" style="padding-bottom: 10px;">
+    <div class="section-head">
+      <div class="section-title">校园动态</div>
+    </div>
+  </div>
+  <div class="feed" @scroll="onScroll">
+    <div class="feed-grid">
+      <div class="blog-box" v-for="b in blogs" :key="b.id" @click="toBlogDetail(b)">
+        <div class="blog-img"><img :src="b.img" alt=""></div>
+        <div class="blog-title">{{b.title}}</div>
+        <div class="blog-foot">
+          <div class="blog-user-icon"><img :src="b.icon || '/imgs/icons/default-icon.png'" alt=""></div>
+          <div class="blog-user-name">{{b.name}}</div>
+          <div class="blog-liked" @click.stop="addLike(b)">
+            <i class="el-icon-star-on" :style="{color: b.isLike ? '#F4A261' : '#A9B2AF'}"></i>
+            {{b.liked}}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="empty-tip" v-if="!blogs.length">还没有动态，去发布第一条吧</div>
+  </div>
+
+  <div class="ai-fab" @click="goChat">
+    <i class="el-icon-chat-line-round"></i>
+    <span>AI助手</span>
+  </div>
+
+  <foot-bar :active-btn="1"></foot-bar>
+</div>
+<script src="./js/vue.js"></script>
+<script src="./js/axios.min.js"></script>
+<script src="./js/element.js"></script>
+<script src="./js/common.js"></script>
+<script src="./js/footer.js"></script>
+<script>
+  const TYPE_EMOJI = {1: '🍚', 2: '☕', 3: '🛒', 4: '🖨️', 5: '📦', 6: '📚', 7: '🏋️', 8: '💇', 9: '🏥', 10: '🔁'};
+  const PROMO_SHOPS = [1, 4, 8];
+
+  const app = new Vue({
+    el: "#app",
+    data: {
+      util,
+      campus: "星城大学 · 东校区",
+      campuses: ["星城大学 · 东校区", "星城大学 · 西校区", "星城大学 · 北校区"],
+      isReachBottom: false,
+      types: [],
+      promos: [],
+      blogs: [],
+      current: 1,
+    },
+    created() {
+      this.queryTypes();
+      this.queryPromos();
+      this.queryHotBlogsScroll();
+    },
+    methods: {
+      switchCampus(c) {
+        this.campus = c;
+        this.$message({message: "已切换到 " + c, type: "success", duration: 1200});
+      },
+      goChat() {
+        location.href = "/chat.html";
+      },
+      toPage() {
+        location.href = "/info.html";
+      },
+      queryTypes() {
+        axios.get("/shop-type/list")
+          .then(({data}) => {
+            data.forEach(t => t.emoji = TYPE_EMOJI[t.id] || '🏫');
+            this.types = data.slice(0, 10);
+          })
+          .catch(err => this.$message.error(err))
+      },
+      queryPromos() {
+        Promise.all(PROMO_SHOPS.map(id => axios.get("/voucher/list/" + id)))
+          .then(list => {
+            const all = [];
+            list.forEach(res => (res.data || []).forEach(v => all.push(v)));
+            this.promos = all.slice(0, 5);
+          })
+          .catch(() => { this.promos = []; });
+      },
+      discount(v) {
+        if (!v.actualValue) return '';
+        return (v.payValue / v.actualValue * 10).toFixed(1).replace(/\.0$/, '');
+      },
+      queryHotBlogsScroll() {
+        axios.get("/blog/hot?current=" + this.current)
+          .then(({data}) => {
+            data.forEach(b => b.img = b.images.split(",")[0]);
+            this.blogs = this.blogs.concat(data);
+          })
+          .catch(err => this.$message.error(err))
+      },
+      addLike(b) {
+        axios.put("/blog/like/" + b.id)
+          .then(() => this.queryBlogById(b))
+          .catch(err => this.$message.error(err))
+      },
+      queryBlogById(b) {
+        axios.get("/blog/" + b.id)
+          .then(({data}) => {
+            b.liked = data.liked;
+            b.isLike = data.isLike;
+          })
+          .catch(() => { b.liked++; })
+      },
+      onScroll(e) {
+        const el = e.target;
+        if (el.scrollTop + el.offsetHeight > el.scrollHeight && !this.isReachBottom) {
+          this.isReachBottom = true;
+          this.current++;
+          this.queryHotBlogsScroll();
+        } else {
+          this.isReachBottom = false;
+        }
+      },
+      toShopList(id, name) {
+        location.href = "/shop-list.html?type=" + id + "&name=" + encodeURIComponent(name);
+      },
+      toShopDetail(id) {
+        location.href = "/shop-detail.html?id=" + id;
+      },
+      toBlogDetail(b) {
+        location.href = "/blog-detail.html?id=" + b.id;
+      }
+    }
+  })
+</script>
+</body>
+</html>

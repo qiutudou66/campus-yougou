@@ -36,5 +36,4 @@ build/
 nginx-1.18.0/logs/*.log
 nginx-1.18.0/logs/nginx.pid
 
-### 课程配套前端静态资源（非本项目产出，clone 后按 nginx.conf 的 root 自行拷贝） ###
-nginx-1.18.0/html/hmdp/
+### 前端静态资源已按「校园优购」改版，纳入版本库（nginx.conf 的 root 指向 html/hmdp） ###
