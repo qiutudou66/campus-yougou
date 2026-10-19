@@ -3,6 +3,11 @@ server:
 spring:
   application:
     name: hmdp
+  servlet:
+    multipart:
+      # 默认单文件 1MB，手机照片基本都会超；AI 识图和动态配图都用得上
+      max-file-size: 10MB
+      max-request-size: 10MB
   datasource:
     driver-class-name: com.mysql.jdbc.Driver
     # allowPublicKeyRetrieval: MySQL8 的 caching_sha2_password 在非 TLS 连接上需要向服务端取 RSA 公钥，
