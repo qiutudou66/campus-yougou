@@ -1,0 +1,113 @@
+:root {
+  --el-color-primary: #ff7a59;
+  --el-color-primary-light-3: #ff9d85;
+  --el-color-primary-light-5: #ffbead;
+  --el-color-primary-light-7: #ffd9cc;
+  --el-color-primary-light-8: #ffe6dd;
+  --el-color-primary-light-9: #fff3ee;
+  --el-color-primary-dark-2: #f4633f;
+  --el-color-success: #4fc3a1;
+  --el-color-warning: #ffb238;
+  --el-color-danger: #f36b6b;
+  --el-color-info: #9b8d82;
+
+  --el-text-color-primary: #3b2f2a;
+  --el-text-color-regular: #6d5e55;
+  --el-text-color-secondary: #8a7a6d;
+  --el-text-color-placeholder: #b6a99e;
+
+  --el-border-color: #ecdccb;
+  --el-border-color-light: #f2e5d7;
+  --el-border-color-lighter: #f7ecdf;
+  --el-fill-color-blank: #ffffff;
+
+  --el-border-radius-base: 12px;
+  --el-border-radius-small: 10px;
+  --el-font-family: var(--font-sans);
+}
+
+.el-button {
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+.el-button--large {
+  height: 46px;
+  padding: 0 26px;
+}
+
+.el-input__wrapper,
+.el-textarea__inner {
+  border-radius: 12px;
+  box-shadow: 0 0 0 1px var(--line) inset;
+  background: #fffdfa;
+}
+
+.el-input__wrapper.is-focus,
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1.5px var(--coral) inset;
+}
+
+.el-dropdown-menu {
+  border-radius: 14px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+}
+
+.el-dropdown-menu__item {
+  border-radius: 10px;
+  font-size: 13px;
+}
+
+.el-dropdown-menu__item:not(.is-disabled):hover {
+  background: var(--cream-100);
+  color: var(--coral-dark);
+}
+
+.el-tabs__item {
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.el-tabs__item.is-active {
+  color: var(--coral-dark);
+}
+
+.el-tabs__active-bar {
+  background: var(--coral);
+  border-radius: 999px;
+  height: 3px;
+}
+
+.el-tabs__nav-wrap::after {
+  height: 1px;
+  background: var(--line);
+}
+
+.el-message {
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
+}
+
+.el-dialog {
+  border-radius: var(--radius-lg);
+  background: var(--cream-50);
+}
+
+.el-dialog__header {
+  padding: 24px 24px 8px;
+}
+
+.el-dialog__title {
+  font-weight: 800;
+}
+
+.el-overlay {
+  backdrop-filter: blur(3px);
+}
+
+.el-rate__icon {
+  margin-right: 2px;
+}
